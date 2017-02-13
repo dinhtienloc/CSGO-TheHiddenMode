@@ -14,7 +14,6 @@
 
 // Cvar Handle
 Handle pCvar_iTimeCountdown;
-//Handle pCvar_bFallDamage;
 Handle pCvar_iHiddenHP;
 Handle pCvar_bShowHiddenHP;
 Handle pCvar_fHiddenSpeedMul;
@@ -31,7 +30,7 @@ Handle pCvar_dia;
 // Timer Handle
 //Handle Timer_Countdown = null;
 //Handle Timer_ShowHiddenHP = null;
-//Handle Timer_SkillCountdown = null;
+Handle Timer_SkillCountDown = null;
 Handle Timer_SetHiddenVisible = null;
 
 // Global variables
@@ -51,16 +50,16 @@ float gSkillCountdown;
 new PlayerClass:gPlayerClass[MAXPLAYERS + 1];
 
 // Sounds
-char gSound_Countdown[][] = {
-	"*/hidden/cd/1.mp3",
-	"*/hidden/cd/2.mp3",
-	"*/hidden/cd/3.mp3",
-	"*/hidden/cd/4.mp3",
-	"*/hidden/cd/5.mp3",
-	"*/hidden/cd/6.mp3",
-	"*/hidden/cd/7.mp3",
-	"*/hidden/cd/8.mp3",
-	"*/hidden/cd/9.mp3",
+char gSound_Countdown[][] =  {
+	"*/hidden/cd/1.mp3", 
+	"*/hidden/cd/2.mp3", 
+	"*/hidden/cd/3.mp3", 
+	"*/hidden/cd/4.mp3", 
+	"*/hidden/cd/5.mp3", 
+	"*/hidden/cd/6.mp3", 
+	"*/hidden/cd/7.mp3", 
+	"*/hidden/cd/8.mp3", 
+	"*/hidden/cd/9.mp3", 
 	"*/hidden/cd/10.mp3"
 };
 
@@ -68,14 +67,38 @@ char gSound_HiddenAppear[] = "*/hidden/hidden_laugh.mp3";
 char gSound_HiddenKill[] = "*/hidden/hidden_kill.mp3";
 char gSound_HiddenDeath[] = "*/hidden/hidden_death.mp3";
 
-ArrayList soundList;
+char gHungryBarVmt[][] = {
+	"materials/overlays/hm/lvl_1_hud.vmt",
+	"materials/overlays/hm/lvl_2_hud.vmt",
+	"materials/overlays/hm/lvl_3_hud.vmt",
+	"materials/overlays/hm/lvl_4_hud.vmt",
+	"materials/overlays/hm/lvl_5_hud.vmt",
+	"materials/overlays/hm/lvl_6_hud.vmt",
+	"materials/overlays/hm/lvl_7_hud.vmt",
+	"materials/overlays/hm/lvl_8_hud.vmt",
+	"materials/overlays/hm/lvl_9_hud.vmt",
+	"materials/overlays/hm/lvl_10_hud.vmt"
+};
 
-public Plugin myinfo = {
-	name        = "[CSGO] The Hidden: Gamemode",
-	author      = "Locdt",
-	description = "",
-	version     = "1.0",
-	url         = ""
+char gHungryBarVtf[][] = {
+	"materials/overlays/hm/lvl_1_hud.vtf",
+	"materials/overlays/hm/lvl_2_hud.vtf",
+	"materials/overlays/hm/lvl_3_hud.vtf",
+	"materials/overlays/hm/lvl_4_hud.vtf",
+	"materials/overlays/hm/lvl_5_hud.vtf",
+	"materials/overlays/hm/lvl_6_hud.vtf",
+	"materials/overlays/hm/lvl_7_hud.vtf",
+	"materials/overlays/hm/lvl_8_hud.vtf",
+	"materials/overlays/hm/lvl_9_hud.vtf",
+	"materials/overlays/hm/lvl_10_hud.vtf"
+};
+
+public Plugin myinfo =  {
+	name = "[CSGO] The Hidden: Gamemode", 
+	author = "Locdt", 
+	description = "", 
+	version = "1.0", 
+	url = ""
 };
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
@@ -96,18 +119,18 @@ public void OnPluginStart() {
 	
 	AddCommandListener(OnLookWeaponPressed, "+lookatweapon");
 	
-	pCvar_iTimeCountdown 	= CreateConVar("hm_cdtime", "15");
+	pCvar_iTimeCountdown = CreateConVar("hm_cdtime", "15");
 	//pCvar_bFallDamage 		= CreateConVar("hm_falldamage", "0");
 	
-	pCvar_iHiddenHP 		= CreateConVar("hm_hiddenhp", "5000");
-	pCvar_bShowHiddenHP 	= CreateConVar("hm_showhiddenhp", "1");
-	pCvar_fHiddenSpeedMul 	= CreateConVar("hm_hiddenspeedmul", "2.0");
+	pCvar_iHiddenHP = CreateConVar("hm_hiddenhp", "5000");
+	pCvar_bShowHiddenHP = CreateConVar("hm_showhiddenhp", "1");
+	pCvar_fHiddenSpeedMul = CreateConVar("hm_hiddenspeedmul", "2.0");
 	pCvar_fHiddenGravityMul = CreateConVar("hm_hiddengravitymul", "0.5");
-	pCvar_fJumpPower 		= CreateConVar("hm_jumppower", "1000.0");
-	pCvar_fSkillCountdown 	= CreateConVar("hm_skillcd", "5.0");
+	pCvar_fJumpPower = CreateConVar("hm_jumppower", "1000.0");
+	pCvar_fSkillCountdown = CreateConVar("hm_skillcd", "5.0");
 	
 	pCvar_dia = FindConVar("sv_disable_immunity_alpha");
-	if(pCvar_dia == INVALID_HANDLE)
+	if (pCvar_dia == INVALID_HANDLE)
 		return;
 	SetConVarInt(pCvar_dia, 1);
 	
@@ -117,10 +140,10 @@ public void OnPluginStart() {
 }
 
 public void OnMapStart() {
-	int i;
 	int arraySize = ByteCountToCells(PLATFORM_MAX_PATH);
-	soundList = new ArrayList(arraySize);
-	for (i = 0; i < sizeof(gSound_Countdown); i++) {
+	ArrayList soundList = new ArrayList(arraySize);
+	
+	for (int i = 0; i < sizeof(gSound_Countdown); i++) {
 		soundList.PushString(gSound_Countdown[i]);
 	}
 	
@@ -128,14 +151,23 @@ public void OnMapStart() {
 	soundList.PushString(gSound_HiddenKill);
 	soundList.PushString(gSound_HiddenDeath);
 	
-	for (i = 0; i < soundList.Length; i++) {
+	for (int i = 0; i < soundList.Length; i++) {
 		char buffer[MAX_FILE_LEN];
 		soundList.GetString(i, buffer, charsmax(buffer));
-		AddToStringTable(FindStringTable("soundprecache" ), buffer);
+		AddToStringTable(FindStringTable("soundprecache"), buffer);
 		ReplaceString(buffer, charsmax(buffer), "*/", "", false);
 		Format(buffer, charsmax(buffer), "sound/%s", buffer);
 		PrintToServer("%s", buffer);
 		AddFileToDownloadsTable(buffer);
+	}
+	
+	for (int i = 0; i < sizeof(gHungryBarVtf); i++) {
+		AddFileToDownloadsTable(gHungryBarVtf[i]);
+	}
+	
+	for (int i = 0; i < sizeof(gHungryBarVmt); i++) {
+		AddFileToDownloadsTable(gHungryBarVmt[i]);
+		PrecacheModel(gHungryBarVmt[i]);
 	}
 }
 /**
@@ -169,12 +201,14 @@ public void ConVarChanged(Handle:cvar, const String:oldVal[], const String:newVa
 public void OnClientPutInServer(client) {
 	//SDKHook(client, SDKHook_TraceAttack, OnTraceAttack); 
 	SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
-	
+	SDKHook(client, SDKHook_WeaponCanUse, OnWeaponCanUse);
+	SDKHook(client, SDKHook_WeaponDrop, OnWeaponDrop);
+    
 	gPlayerClass[client] = TEAM_HUMAN;
 }
 
-public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:angles[3], &weapon) {
-	if (!IsValidEntity(weapon)) 
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon) {
+	if (!IsValidEntity(weapon))
 		return Plugin_Continue;
 	
 	char weaponclassname[PLATFORM_MAX_PATH];
@@ -182,14 +216,14 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 	
 	if (StrEqual(weaponclassname, "weapon_knife")) {
 		if (buttons & IN_ATTACK2 || buttons & IN_ATTACK) {
-            // Hidden attack
-            gHiddenAttack = true;
-            
-            //if (gHiddenIndex != 0)
-            //PrintToChatAll("Set hidden visible again!");
-            //SetEntityRenderColor(gHiddenIndex, 255, 255, 255, 255);
-            //Timer_SetHiddenVisible = CreateTimer(1.0, TimerSetVisible, _, TIMER_REPEAT); 
-        }
+			// Hidden attack
+			gHiddenAttack = true;
+			
+			//if (gHiddenIndex != 0)
+			//PrintToChatAll("Set hidden visible again!");
+			//SetEntityRenderColor(gHiddenIndex, 255, 255, 255, 255);
+			//Timer_SetHiddenVisible = CreateTimer(1.0, TimerSetVisible, _, TIMER_REPEAT); 
+		}
 	}
 	return Plugin_Continue;
 }
@@ -201,7 +235,7 @@ public OnRoundStart(Handle event, const char[] name, bool dontBroadcast) {
 	
 	// Reset timer
 	gTimer = GetConVarInt(pCvar_iTimeCountdown);
-	CreateTimer(1.0, TimerCountdown, _, TIMER_REPEAT); 
+	CreateTimer(1.0, TimerCountdown, _, TIMER_REPEAT);
 }
 
 public OnRoundEnd(Handle event, const char[] name, bool dontBroadcast) {
@@ -235,18 +269,21 @@ public OnPlayerDeath(Handle event, const char[] name, bool dontBroadcast) {
 		EmitSoundToAll(gSound_HiddenDeath);
 	}
 	else if (IsClientValid(iClient) && gPlayerClass[iClient] == TEAM_HUMAN) {
+		Dissolve(iClient, 3);
 		EmitSoundToAll(gSound_HiddenKill);
 	}
 }
 
 public Action OnLookWeaponPressed(int client, const char[] command, int argc) {
 	
-	if (gHiddenIndex == 0 || client != gHiddenIndex) return Plugin_Continue;
+	if (gHiddenIndex == 0 || client != gHiddenIndex) return Plugin_Handled;
 	
 	if (gSkillCountdown == 0.0) {
-		DoSkill(client);
-		gSkillCountdown = GetConVarFloat(pCvar_fSkillCountdown);
-		CreateTimer(1.0, OnSkillCountdown, _, TIMER_REPEAT);
+		if (Timer_SkillCountDown == INVALID_HANDLE) {
+			DoSkill(client);
+			gSkillCountdown = GetConVarFloat(pCvar_fSkillCountdown);
+			Timer_SkillCountDown = CreateTimer(1.0, OnSkillCountdown, _, TIMER_REPEAT);
+		}
 	}
 	
 	return Plugin_Handled;
@@ -294,13 +331,30 @@ public Action OnTraceAttack(int victim, int &attacker, int &inflictor, float &da
 	return Plugin_Handled;
 }
 */
+
+public Action OnWeaponCanUse(int client, int weapon) 
+{
+    if(gPlayerClass[client] == TEAM_HIDDEN)
+        return Plugin_Handled; 
+    
+    return Plugin_Continue; 
+}
+
+public Action OnWeaponDrop(int client, int weapon) 
+{
+    if(gPlayerClass[client] == TEAM_HIDDEN)
+        return Plugin_Handled; 
+    
+    return Plugin_Continue; 
+}  
+
 public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype) {
 	// Ignore all damage send to player if game is not begin
-	if (!bRoundStart || !bGameBegin || bRoundEnd || gHiddenIndex == 0) return Plugin_Handled;
+	if (!bRoundStart || !bGameBegin || bRoundEnd || gHiddenIndex == 0)return Plugin_Handled;
 	
 	// Game begin
 	if (bRoundStart && bGameBegin) {
-		if (attacker == 0) return Plugin_Continue;
+		if (attacker == 0)return Plugin_Continue;
 		
 		if (victim == gHiddenIndex && IsClientValid(attacker)) {
 			if (Timer_SetHiddenVisible != null) {
@@ -308,7 +362,7 @@ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &dam
 				KillTimer(Timer_SetHiddenVisible);
 				Timer_SetHiddenVisible = null;
 			}
-						
+			
 			// Set timer again
 			SetEntityRenderColor(gHiddenIndex, 255, 255, 255, 255);
 			gAlpha = 255;
@@ -330,35 +384,35 @@ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &dam
 		if (attacker == gHiddenIndex && IsClientValid(victim))
 			return Plugin_Continue;
 		
-		if (!IsClientValid(attacker)) return Plugin_Handled;
+		if (!IsClientValid(attacker))return Plugin_Handled;
 	}
 	return Plugin_Handled;
 }
 
-public Action Hook_SetTransmit(int entity, int client) 
-{ 
-    if (entity != client && gAlpha <= 0) {
-    	SetEntityRenderMode(client, RENDER_NORMAL);
-        return Plugin_Handled;
-    }
-    
-    return Plugin_Continue; 
+public Action Hook_SetTransmit(int entity, int client)
+{
+	if (entity != client && gAlpha <= 0) {
+		SetEntityRenderMode(client, RENDER_NORMAL);
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action OnSetTransmit_GlowSkin(int iSkin, int client) {
-	if(!IsPlayerAlive(client)) return Plugin_Handled;
+	if (!IsPlayerAlive(client))return Plugin_Handled;
 	
 	for (int id = 1; id <= MaxClients; id++) {
 		if (id == gHiddenIndex)
 			return Plugin_Continue;
-			
-		if (!IsClientValid(id)) 
+		
+		if (!IsClientValid(id))
 			continue;
-			
-		if(!CPS_HasSkin(id)) 
+		
+		if (!CPS_HasSkin(id))
 			continue;
-	
-		if(EntRefToEntIndex(CPS_GetSkin(id)) != iSkin)
+		
+		if (EntRefToEntIndex(CPS_GetSkin(id)) != iSkin)
 			continue;
 	}
 	
@@ -382,26 +436,26 @@ void StartHiddenMode() {
 public Action TimerCountdown(Handle timer) {
 	if (gTimer <= 0) {
 		gMaxPlayers = FuncCountPlayerConnected();
-		gHiddenIndex = FuncGetRandomPlayerAlive(GetRandomInt(1, gMaxPlayers));
-		//gHiddenIndex = 1;
-
+		//gHiddenIndex = FuncGetRandomPlayerAlive(GetRandomInt(1, gMaxPlayers));
+		gHiddenIndex = 1;
+		
 		bGameBegin = true;
 		
 		PrintCenterTextAll("Player with ID: %d become The Hidden", gHiddenIndex);
 		StartHiddenMode();
-
+		
 		return Plugin_Stop;
 	}
 	
-	if(gTimer == 1) {
+	if (gTimer == 1) {
 		EmitSoundToAll(gSound_Countdown[0]);
-		PrintHintTextToAll("The Hidden will be selected after 1 second");
+		PrintCenterTextAll("The Hidden will be selected after 1 second");
 	}
 	else {
-		PrintHintTextToAll("The Hidden will be selected after %d seconds", gTimer);
-		if (gTimer <= 10) EmitSoundToAll(gSound_Countdown[gTimer-1]);
+		PrintCenterTextAll("The Hidden will be selected after %d seconds", gTimer);
+		if (gTimer <= 10)EmitSoundToAll(gSound_Countdown[gTimer - 1]);
 	}
-		
+	
 	gTimer--;
 	
 	return Plugin_Continue;
@@ -409,7 +463,7 @@ public Action TimerCountdown(Handle timer) {
 
 public Action OnSkillCountdown(Handle timer) {
 	if (gSkillCountdown <= 0.0) {
-		//KillTimer(Timer_SkillCountdown);
+		Timer_SkillCountDown = INVALID_HANDLE;
 		return Plugin_Stop;
 	}
 	
@@ -424,10 +478,10 @@ public Action ShowHiddenHP(Handle timer) {
 		return Plugin_Stop;
 	}
 	
-	if(bGameBegin) {
+	if (bGameBegin) {
 		static char name[64];
 		GetClientName(gHiddenIndex, name, charsmax(name));
-		if (gSkillCountdown != 0.0)
+		if (gSkillCountdown > 0.0)
 			PrintHintTextToAll("Hidden: %s\nHP: %d\nSkill: <font color='#ff0000'>Boost</font> (Press F) %d", name, GetClientHealth(gHiddenIndex), RoundFloat(gSkillCountdown));
 		else
 			PrintHintTextToAll("Hidden: %s\nHP: %d\nSkill: Boost (Press F)", name, GetClientHealth(gHiddenIndex));
@@ -437,10 +491,10 @@ public Action ShowHiddenHP(Handle timer) {
 }
 
 public Action TimerSetVisible(Handle timer, Handle data) {
-	int subtractionValue = 255/2 + 1;
+	int subtractionValue = 255 / 2 + 1;
 	
 	if (gAlpha <= 0) {
-		Timer_SetHiddenVisible = null; 
+		Timer_SetHiddenVisible = null;
 		return Plugin_Stop;
 	}
 	else {
@@ -455,7 +509,7 @@ public Action TimerSetVisible(Handle timer, Handle data) {
 /**************************
  **** PRIVATE FUNCTION ****
  **************************/
- 
+
 void FuncMakeHidden() {
 	// Change The Hidden to T
 	FuncChangeHiddenToT();
@@ -478,12 +532,12 @@ void FuncMakeHidden() {
 	
 	// The Hidden can see through wall
 	for (int id = 1; id <= MaxClients; id++) {
-		if (!IsClientValid(id)) 
+		if (!IsClientValid(id))
 			continue;
 		
-		if (!IsPlayerAlive(id)) 
+		if (!IsPlayerAlive(id))
 			continue;
-			
+		
 		if (id != gHiddenIndex) {
 			SetupGlowSkin(id);
 		}
@@ -510,20 +564,20 @@ void DoSkill(int iClient) {
 	float fPower = GetConVarFloat(pCvar_fJumpPower);
 	ScaleVector(fDirection, fPower);
 	
-	TeleportEntity(iClient, NULL_VECTOR , NULL_VECTOR, fDirection);  
+	TeleportEntity(iClient, NULL_VECTOR, NULL_VECTOR, fDirection);
 }
 
 void SetupGlowSkin(int client) {
-	if(!IsPlayerAlive(client))
+	if (!IsPlayerAlive(client))
 		return;
 	
 	char sModel[PLATFORM_MAX_PATH];
 	GetClientModel(client, sModel, sizeof(sModel));
 	int iSkin = CPS_SetSkin(client, sModel, CPS_RENDER);
 	
-	if(iSkin == -1)
+	if (iSkin == -1)
 		return;
-		
+	
 	if (SDKHookEx(iSkin, SDKHook_SetTransmit, OnSetTransmit_GlowSkin))
 		SetupGlow(client, iSkin);
 }
@@ -552,10 +606,10 @@ void DisablePlayerGlow() {
 	for (int id = 1; id <= MaxClients; id++) {
 		if (!IsClientValid(id))
 			continue;
-			
-		if (!IsPlayerAlive(id)) 
+		
+		if (!IsPlayerAlive(id))
 			continue;
-			
+		
 		if (id != gHiddenIndex) {
 			UnhookGlow(id);
 		}
@@ -564,11 +618,11 @@ void DisablePlayerGlow() {
 
 void UnhookGlow(int client)
 {
-	if(!IsClientValid(client))
+	if (!IsClientValid(client))
 		return;
-		
+	
 	int iSkin = CPS_GetSkin(client);
-	if(IsValidEntity(iSkin))
+	if (IsValidEntity(iSkin))
 	{
 		SetEntProp(iSkin, Prop_Send, "m_bShouldGlow", false, 1);
 		SDKUnhook(iSkin, SDKHook_SetTransmit, OnSetTransmit_GlowSkin);
@@ -577,12 +631,12 @@ void UnhookGlow(int client)
 
 void FuncChangePlayerTeam(int iClient, int newTeam) {
 	// Stop if change to CS_TEAM_NONE
-	if (newTeam == CS_TEAM_NONE) return;
+	if (newTeam == CS_TEAM_NONE)return;
 	
 	int curTeam = GetClientTeam(iClient);
 	
 	// Stop f new team is the current team
-	if (curTeam == newTeam) return;
+	if (curTeam == newTeam)return;
 	
 	// Change team
 	CS_SwitchTeam(iClient, newTeam);
@@ -596,12 +650,12 @@ void FuncSetPlayerClass() {
 			else
 				gPlayerClass[id] = TEAM_HIDDEN;
 		}
-	}		
+	}
 }
 
 void FuncChangeAllHumanToCT() {
 	for (int id = 1; id <= MaxClients; id++) {
-		if (!IsClientValid(id) || gPlayerClass[id] != TEAM_HUMAN) continue;
+		if (!IsClientValid(id) || gPlayerClass[id] != TEAM_HUMAN)continue;
 		
 		if (gPlayerClass[id] == TEAM_HUMAN)
 			FuncChangePlayerTeam(id, CS_TEAM_CT);
@@ -610,10 +664,10 @@ void FuncChangeAllHumanToCT() {
 
 void FuncChangeHiddenToT() {
 	// Stop if no The Hidden selected
-	if (gHiddenIndex == 0) return;
+	if (gHiddenIndex == 0)return;
 	
 	// Check chosen player is set to The Hidden or not
-	if (gPlayerClass[gHiddenIndex] != TEAM_HIDDEN) return;
+	if (gPlayerClass[gHiddenIndex] != TEAM_HIDDEN)return;
 	
 	// Everything is done
 	FuncChangePlayerTeam(gHiddenIndex, CS_TEAM_T);
@@ -624,7 +678,7 @@ int FuncGetRandomPlayerAlive(int n) {
 	iAlive = 0;
 	
 	for (id = 1; id <= MaxClients; id++) {
-		if (IsPlayerAlive(id)) iAlive++;
+		if (IsPlayerAlive(id))iAlive++;
 		if (iAlive == n)return id;
 	}
 	
@@ -638,11 +692,11 @@ void FuncBalanceTeam() {
 	iPlayersNum = FuncCountPlayerConnected();
 	
 	// No players, don't bother
-	if (iPlayersNum < 1) return;
+	if (iPlayersNum < 1)return;
 	
 	// Split players evenly
 	static iTerrors, iMaxTerrors, id, curTeam;
-	iMaxTerrors = iPlayersNum/2;
+	iMaxTerrors = iPlayersNum / 2;
 	iTerrors = 0;
 	
 	// First, set everyone to CT
@@ -665,7 +719,7 @@ void FuncBalanceTeam() {
 	while (iTerrors < iMaxTerrors)
 	{
 		// Keep looping through all players
-		if (++id > MaxClients) id = 1;
+		if (++id > MaxClients)id = 1;
 		
 		// Skip if not connected
 		if (!IsClientConnected(id))
@@ -740,9 +794,45 @@ bool IsClientValid(int client) {
 	* 	      |    |   |    | |      |\     	*
 	* 	   ___|    |   |____| |____  |  \  		*
 	* 											*
- ***************************************************/ 
- 
- /**
+ ***************************************************/
+stock void Dissolve(client, type) {
+    if (!IsClientConnected(client)) return;
+
+    int ragdoll = GetEntPropEnt(client, Prop_Send, "m_hRagdoll");
+    if (ragdoll<0) return;
+
+    char dname[32];
+    char dtype[32];
+    Format(dname, sizeof(dname), "dis_%d", client);
+    Format(dtype, sizeof(dtype), "%d", type);
+    
+    int ent = CreateEntityByName("env_entity_dissolver");
+    if (ent>0) {
+        DispatchKeyValue(ragdoll, "targetname", dname);
+        DispatchKeyValue(ent, "dissolvetype", dtype);
+        DispatchKeyValue(ent, "target", dname);
+        DispatchKeyValue(ent, "magnitude", "10");
+        AcceptEntityInput(ent, "Dissolve", ragdoll, ragdoll);
+        AcceptEntityInput(ent, "Kill");
+    }
+}
+
+stock void DropWeapons(int client)
+{
+	int weapon;
+	for (int i = 0; i < CS_SLOT_C4 && i != 2; i++)
+	{
+		if ((weapon = GetPlayerWeaponSlot(client, i)) != -1)
+		{  
+			if (IsValidEdict(weapon))
+			{
+				CS_DropWeapon(client, weapon, true);
+			}
+		}
+	}
+}
+
+/**
  * Gets the Classname of an entity.
  * This is like GetEdictClassname(), except it works for ALL
  * entities, not just edicts.
@@ -752,7 +842,7 @@ bool IsClientValid(int client) {
  * @param size				Max size of buffer.
  * @return					
  */
-stock Entity_GetClassName(entity, String:buffer[], size)
+stock bool Entity_GetClassName(int entity, char[] buffer, int size)
 {
 	GetEntPropString(entity, Prop_Data, "m_iClassname", buffer, size);
 	
@@ -771,7 +861,7 @@ stock Entity_GetClassName(entity, String:buffer[], size)
  * @param entity			Entity index.
  * @return 				True if the entity is a player, false otherwise.
  */
-stock bool:Entity_IsPlayer(entity)
+stock bool Entity_IsPlayer(int entity)
 {
 	if (entity < 1 || entity > MaxClients) {
 		return false;
@@ -787,11 +877,11 @@ stock bool:Entity_IsPlayer(entity)
  * @param class			Classname String.
  * @return				True if the classname matches, false otherwise.
  */
-stock bool:Entity_ClassNameMatches(entity, const String:className[], partialMatch=false)
+stock bool Entity_ClassNameMatches(int entity, const char[] className, bool partialMatch = false)
 {
 	decl String:entity_className[64];
 	Entity_GetClassName(entity, entity_className, sizeof(entity_className));
-
+	
 	if (partialMatch) {
 		return (StrContains(entity_className, className) != -1);
 	}
@@ -807,7 +897,7 @@ stock bool:Entity_ClassNameMatches(entity, const String:className[], partialMatc
  * @param kenny			Entity index.
  * @return 				True on success, false otherwise
  */
-stock bool:Entity_Kill(entity)
+stock bool Entity_Kill(int entity)
 {
 	if (Entity_IsPlayer(entity)) {
 		ForcePlayerSuicide(entity);
@@ -824,10 +914,10 @@ stock bool:Entity_Kill(entity)
  * @param client		Client Index.
  * @return				Weapon list offset or -1 on failure.
  */
-stock Client_GetWeaponsOffset(client)
+stock int Client_GetWeaponsOffset(int client)
 {
 	static offset = -1;
-
+	
 	if (offset == -1) {
 		offset = FindDataMapInfo(client, "m_hMyWeapons");
 	}
@@ -845,15 +935,15 @@ stock Client_GetWeaponsOffset(client)
  * @param clearAmmo		If true, the ammo the player carries for all removed weapons are set to 0 (primary and secondary).
  * @return				Number of removed weapons.
  */
-stock Client_RemoveAllWeapons(client, const String:exclude[]="", bool:clearAmmo=false)
+stock Client_RemoveAllWeapons(int client, const char[] exclude = "", bool clearAmmo = false)
 {
-	new offset = Client_GetWeaponsOffset(client) - 4;
+	int offset = Client_GetWeaponsOffset(client) - 4;
 	
-	new numWeaponsRemoved = 0;
-	for (new i=0; i < 48; i++) {
+	int numWeaponsRemoved = 0;
+	for (int i = 0; i < 48; i++) {
 		offset += 4;
-
-		new weapon = GetEntDataEnt2(client, offset);
+		
+		int weapon = GetEntDataEnt2(client, offset);
 		
 		if (!IsValidEdict(weapon)) {
 			continue;
@@ -866,21 +956,21 @@ stock Client_RemoveAllWeapons(client, const String:exclude[]="", bool:clearAmmo=
 		}
 		
 		if (clearAmmo) {
-			new offset_ammo = FindDataMapInfo(client, "m_iAmmo");
+			int offset_ammo = FindDataMapInfo(client, "m_iAmmo");
 			
-			new priOffset = offset_ammo + (GetEntProp(weapon, Prop_Data, "m_iPrimaryAmmoType") * 4);
+			int priOffset = offset_ammo + (GetEntProp(weapon, Prop_Data, "m_iPrimaryAmmoType") * 4);
 			SetEntData(client, priOffset, 0, 4, true);
 			
-			new secondOffset = offset_ammo + (GetEntProp(weapon, Prop_Data, "m_iSecondaryAmmoType") * 4);
+			int secondOffset = offset_ammo + (GetEntProp(weapon, Prop_Data, "m_iSecondaryAmmoType") * 4);
 			SetEntData(client, secondOffset, 0, 4, true);
 		}
-
+		
 		if (RemovePlayerItem(client, weapon)) {
 			Entity_Kill(weapon);
 		}
-
+		
 		numWeaponsRemoved++;
 	}
 	
 	return numWeaponsRemoved;
-}
+} 
